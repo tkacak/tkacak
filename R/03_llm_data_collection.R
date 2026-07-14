@@ -24,15 +24,35 @@ response_schema <- do.call(type_object, c(
 ))
 
 # ---- Get responses for a single persona --------------------------------
-get_responses <- function(chat, p, item_order) {
+# Retries on rate-limit (HTTP 429) / quota errors instead of skipping the
+# persona: waits for the per-minute quota window to reset and tries again.
+get_responses <- function(chat, p, item_order, max_retries = 6, wait_sec = 60) {
   prompt <- build_persona_prompt(p, item_order)
-  raw <- chat$clone()$chat_structured(prompt, type = response_schema)
-
-  # Map responses from presentation order back to original item numbers
-  presented <- unlist(raw[paste0("item_", seq_len(n_items))])
-  responses <- integer(n_items)
-  responses[item_order] <- presented
-  setNames(as.list(responses), item_names)
+  attempt <- 0
+  repeat {
+    attempt <- attempt + 1
+    res <- tryCatch(
+      chat$clone()$chat_structured(prompt, type = response_schema),
+      error = function(e) e
+    )
+    if (!inherits(res, "error")) {
+      # Map responses from presentation order back to original item numbers
+      presented <- unlist(res[paste0("item_", seq_len(n_items))])
+      responses <- integer(n_items)
+      responses[item_order] <- presented
+      return(setNames(as.list(responses), item_names))
+    }
+    # Error branch: retry only rate-limit / quota errors, otherwise give up
+    msg <- conditionMessage(res)
+    if (grepl("429|quota|rate.?limit|RESOURCE_EXHAUSTED", msg, ignore.case = TRUE) &&
+        attempt <= max_retries) {
+      message("  rate limit hit; waiting ", wait_sec, "s then retrying (",
+              attempt, "/", max_retries, ")")
+      Sys.sleep(wait_sec)
+    } else {
+      stop(res)  # non-rate error, or retries exhausted -> bubble up to caller
+    }
+  }
 }
 
 # ---- Main loop: model × persona ----------------------------------------

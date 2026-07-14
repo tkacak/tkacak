@@ -29,9 +29,9 @@ config <- list(
   # pause_sec = seconds to wait between requests (rate-limit buffer).
   models = tribble(
     ~provider,    ~model,                     ~pause_sec,
-    "google",     "gemini-3.5-flash",          2
-    # Enable these when you have their API keys (console.groq.com, console.mistral.ai):
-    # "groq",      "llama-3.3-70b-versatile",  2.5,
+    "google",     "gemini-3.5-flash",          4,  # free tier = 20 req/min -> keep pause >= 3s
+    "groq",       "llama-3.3-70b-versatile",   2.5 # free tier = ~30 req/min
+    # Enable this when you have a Mistral key (console.mistral.ai):
     # "mistral",   "mistral-small-latest",    31,
     # Paid / local alternatives:
     # "anthropic", "claude-sonnet-5",          0.3,  # ANTHROPIC_API_KEY (paid)

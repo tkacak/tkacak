@@ -1,13 +1,13 @@
 # ============================================================
-# run_all.R — tüm akışı sırayla çalıştırır
-# API anahtarlarını .Renviron'a yazdıktan sonra:
+# run_all.R — runs the whole pipeline in order
+# After putting your API keys in .Renviron:
 #   source("run_all.R")
 # ============================================================
 
-source("R/00_kurulum.R")           # paketler + yapılandırma
-source("R/01_olcek_tanimi.R")      # ölçek ve maddeler
-source("R/02_persona_uretimi.R")   # simülatif bireyler
-source("R/03_llm_veri_toplama.R")  # LLM çağrıları (maliyetli adım!)
-source("R/04_veri_temizleme.R")    # kalite kontrol + ters puanlama
-source("R/05_psikometrik_analiz.R")# örneklem başına psikometri
-source("R/06_karsilastirma.R")     # LLM ↔ gerçek karşılaştırması
+source("R/00_setup.R")                  # packages + configuration
+source("R/01_scale_definition.R")       # scale and items
+source("R/02_persona_generation.R")     # simulated respondents
+source("R/03_llm_data_collection.R")    # LLM calls (the costly step!)
+source("R/04_data_cleaning.R")          # quality control + reverse scoring
+source("R/05_psychometric_analysis.R")  # psychometrics per sample
+source("R/06_comparison.R")             # LLM ↔ real comparison

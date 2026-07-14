@@ -1,14 +1,14 @@
-# API anahtarları — asla depoya girmesin
+# API keys — must never enter the repository
 .Renviron
 
-# R çalışma dosyaları
+# R working files
 .Rhistory
 .RData
 .Rproj.user/
 
-# Veri ve çıktılar (ham LLM yanıtları büyüyebilir; isterseniz
-# data/ham/ satırını kaldırıp yanıtları sürümleyebilirsiniz)
-data/ham/
-data/islenmis/
-data/gercek/
-cikti/
+# Data and outputs (raw LLM responses can grow large; remove the
+# data/raw/ line if you want to version the responses)
+data/raw/
+data/processed/
+data/real/
+output/

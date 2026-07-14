@@ -47,7 +47,7 @@ config <- list(
 # Returns a closure whose $wait() call blocks just long enough to keep the
 # number of calls within the trailing 60-second window at or below
 # floor(rpm * safety_margin). Call $wait() immediately before every request.
-make_rate_limiter <- function(rpm, safety_margin = 0.9) {
+make_rate_limiter <- function(rpm, safety_margin = 0.7) {
   cap <- max(1, floor(rpm * safety_margin))
   call_times <- numeric(0)
   list(

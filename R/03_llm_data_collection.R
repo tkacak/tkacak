@@ -28,9 +28,11 @@ response_schema <- do.call(type_object, c(
 # 60-second call count stays under the provider's rpm cap (see
 # make_rate_limiter() in 00_setup.R). As a second line of defense, a 429 /
 # quota error still triggers a wait-and-retry instead of skipping the
-# persona (covers daily caps or a limiter miscalibrated too high).
+# persona: the provider's error message usually states exactly how long to
+# wait ("Please retry in 49.9s") — that is parsed and used verbatim, since
+# it reflects the server's real quota window far better than a guess.
 get_responses <- function(chat, p, item_order, limiter,
-                          max_retries = 6, wait_sec = 60) {
+                          max_retries = 8, default_wait_sec = 60) {
   prompt <- build_persona_prompt(p, item_order)
   attempt <- 0
   repeat {
@@ -51,6 +53,9 @@ get_responses <- function(chat, p, item_order, limiter,
     msg <- conditionMessage(res)
     if (grepl("429|quota|rate.?limit|RESOURCE_EXHAUSTED", msg, ignore.case = TRUE) &&
         attempt <= max_retries) {
+      suggested <- str_match(msg, "retry in ([0-9.]+)\\s*s")[, 2]
+      wait_sec <- if (!is.na(suggested)) ceiling(as.numeric(suggested)) + 2
+                  else default_wait_sec
       message("  rate limit hit; waiting ", wait_sec, "s then retrying (",
               attempt, "/", max_retries, ")")
       Sys.sleep(wait_sec)

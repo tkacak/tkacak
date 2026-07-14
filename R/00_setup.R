@@ -29,9 +29,10 @@ config <- list(
   # pause_sec = seconds to wait between requests (rate-limit buffer).
   models = tribble(
     ~provider,    ~model,                     ~pause_sec,
-    "google",     "gemini-2.5-flash",          2,
-    "groq",       "llama-3.3-70b-versatile",   2.5,
-    "mistral",    "mistral-small-latest",     31
+    "google",     "gemini-2.5-flash",          2
+    # Enable these when you have their API keys (console.groq.com, console.mistral.ai):
+    # "groq",      "llama-3.3-70b-versatile",  2.5,
+    # "mistral",   "mistral-small-latest",    31,
     # Paid / local alternatives:
     # "anthropic", "claude-sonnet-5",          0.3,  # ANTHROPIC_API_KEY (paid)
     # "openai",    "gpt-4.1",                  0.3,  # OPENAI_API_KEY (paid)

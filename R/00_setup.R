@@ -22,25 +22,54 @@ config <- list(
   use_trait_seed   = FALSE,  # TRUE: give personas a trait-level hint (circularity risk!)
 
   # Models to compare — each row produces a separate "simulated sample".
-  # The default rows below all have FREE tiers (no credit card needed):
-  #   google  -> aistudio.google.com/apikey   (~1,500 requests/day for Flash)
-  #   groq    -> console.groq.com             (~30 req/min, ~1,000 req/day)
-  #   mistral -> console.mistral.ai           (2 req/min -> needs pause_sec = 31)
-  # pause_sec = seconds to wait between requests (rate-limit buffer).
+  # rpm = the provider's free-tier requests-per-minute limit. A sliding-window
+  # rate limiter (see make_rate_limiter() below) paces requests to stay under
+  # this, rather than relying on a fixed guessed delay between calls.
+  #   google  -> aistudio.google.com/apikey   (Gemini Flash free tier: 20 req/min)
+  #   groq    -> console.groq.com             (Llama 3.3 70B free tier: ~30 req/min)
+  #   mistral -> console.mistral.ai           (Experiment tier: 2 req/min)
   models = tribble(
-    ~provider,    ~model,                     ~pause_sec,
-    "google",     "gemini-3.5-flash",          4,  # free tier = 20 req/min -> keep pause >= 3s
-    "groq",       "llama-3.3-70b-versatile",   2.5 # free tier = ~30 req/min
+    ~provider,    ~model,                     ~rpm,
+    "google",     "gemini-3.5-flash",          20,
+    "groq",       "llama-3.3-70b-versatile",   30
     # Enable this when you have a Mistral key (console.mistral.ai):
-    # "mistral",   "mistral-small-latest",    31,
-    # Paid / local alternatives:
-    # "anthropic", "claude-sonnet-5",          0.3,  # ANTHROPIC_API_KEY (paid)
-    # "openai",    "gpt-4.1",                  0.3,  # OPENAI_API_KEY (paid)
-    # "openrouter","<any-free-model>",         3,    # OPENROUTER_API_KEY (50 free req/day)
-    # "github",    "<model-id>",               3,    # GITHUB_PAT (free daily quota)
-    # "ollama",    "llama3.1",                 0     # local, fully free, no key
+    # "mistral",   "mistral-small-latest",     2,
+    # Paid / local alternatives (no meaningful rpm ceiling -> use a high number):
+    # "anthropic", "claude-sonnet-5",          60,  # ANTHROPIC_API_KEY (paid)
+    # "openai",    "gpt-4.1",                  60,  # OPENAI_API_KEY (paid)
+    # "openrouter","<any-free-model>",         20,  # OPENROUTER_API_KEY (50 free req/day)
+    # "github",    "<model-id>",               20,  # GITHUB_PAT (free daily quota)
+    # "ollama",    "llama3.1",                 999  # local, fully free, no key
   )
 )
+
+# ---- Sliding-window rate limiter ----------------------------------------
+# Returns a closure whose $wait() call blocks just long enough to keep the
+# number of calls within the trailing 60-second window at or below
+# floor(rpm * safety_margin). Call $wait() immediately before every request.
+make_rate_limiter <- function(rpm, safety_margin = 0.9) {
+  cap <- max(1, floor(rpm * safety_margin))
+  call_times <- numeric(0)
+  list(
+    wait = function() {
+      now <- Sys.time()
+      call_times <<- call_times[as.numeric(now - call_times, units = "secs") < 60]
+      if (length(call_times) >= cap) {
+        oldest <- call_times[1]
+        sleep_for <- 60 - as.numeric(now - oldest, units = "secs")
+        if (sleep_for > 0) {
+          message("  rate limiter: ", cap, " req/min cap reached, waiting ",
+                  round(sleep_for, 1), "s")
+          Sys.sleep(sleep_for)
+        }
+        now <- Sys.time()
+        call_times <<- call_times[as.numeric(now - call_times, units = "secs") < 60]
+      }
+      call_times <<- c(call_times, Sys.time())
+      invisible(NULL)
+    }
+  )
+}
 
 # ---- Folders -----------------------------------------------------------
 dir.create("data/raw",       recursive = TRUE, showWarnings = FALSE)

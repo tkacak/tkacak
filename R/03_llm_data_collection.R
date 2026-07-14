@@ -24,13 +24,18 @@ response_schema <- do.call(type_object, c(
 ))
 
 # ---- Get responses for a single persona --------------------------------
-# Retries on rate-limit (HTTP 429) / quota errors instead of skipping the
-# persona: waits for the per-minute quota window to reset and tries again.
-get_responses <- function(chat, p, item_order, max_retries = 6, wait_sec = 60) {
+# limiter$wait() is called right before every request so the trailing
+# 60-second call count stays under the provider's rpm cap (see
+# make_rate_limiter() in 00_setup.R). As a second line of defense, a 429 /
+# quota error still triggers a wait-and-retry instead of skipping the
+# persona (covers daily caps or a limiter miscalibrated too high).
+get_responses <- function(chat, p, item_order, limiter,
+                          max_retries = 6, wait_sec = 60) {
   prompt <- build_persona_prompt(p, item_order)
   attempt <- 0
   repeat {
     attempt <- attempt + 1
+    limiter$wait()
     res <- tryCatch(
       chat$clone()$chat_structured(prompt, type = response_schema),
       error = function(e) e
@@ -68,7 +73,9 @@ for (j in seq_len(nrow(config$models))) {
   # Resume support: load previously collected responses
   results <- if (file.exists(raw_file)) read_rds(raw_file) else list()
   chat <- create_chat(m$provider, m$model)
-  cat("\n==>", label, "| collected:", length(results), "/", nrow(personas), "\n")
+  limiter <- make_rate_limiter(m$rpm)
+  cat("\n==>", label, "| rpm cap:", m$rpm,
+      "| collected:", length(results), "/", nrow(personas), "\n")
 
   for (i in seq_len(nrow(personas))) {
     p <- personas[i, ]
@@ -77,7 +84,7 @@ for (j in seq_len(nrow(config$models))) {
     record <- tryCatch(
       c(list(persona_id = p$persona_id, model = label,
              timestamp = as.character(Sys.time())),
-        get_responses(chat, p, item_orders[[i]])),
+        get_responses(chat, p, item_orders[[i]], limiter)),
       error = function(e) {
         message("ERROR [", p$persona_id, "]: ", conditionMessage(e))
         NULL
@@ -89,7 +96,6 @@ for (j in seq_len(nrow(config$models))) {
       write_rds(results, raw_file)  # persist immediately
     }
     if (i %% 25 == 0) cat("  ", i, "personas done\n")
-    Sys.sleep(m$pause_sec)  # provider-specific rate-limit buffer (see config$models)
   }
 
   # Analysis-ready wide table

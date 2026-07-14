@@ -69,7 +69,7 @@ for (j in seq_len(nrow(config$models))) {
       write_rds(results, raw_file)  # persist immediately
     }
     if (i %% 25 == 0) cat("  ", i, "personas done\n")
-    Sys.sleep(0.3)  # rate-limit buffer
+    Sys.sleep(m$pause_sec)  # provider-specific rate-limit buffer (see config$models)
   }
 
   # Analysis-ready wide table

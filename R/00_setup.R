@@ -7,7 +7,7 @@ library(tidyverse)   # data wrangling
 library(ellmer)      # LLM calls from R (Gemini, Groq, Mistral, Ollama, Anthropic...)
 library(psych)       # item analysis, alpha/omega, EFA, parallel analysis, Tucker's phi
 library(lavaan)      # CFA and measurement invariance
-library(semTools)    # model comparison helpers (compareFit)
+#library(semTools)    # model comparison helpers (compareFit)
 library(mirt)        # item response theory (Graded Response Model), DIF
 library(careless)    # careless-responding indices (longstring, IRV)
 library(jsonlite)    # storing raw responses

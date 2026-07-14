@@ -1,0 +1,14 @@
+# API anahtarları — asla depoya girmesin
+.Renviron
+
+# R çalışma dosyaları
+.Rhistory
+.RData
+.Rproj.user/
+
+# Veri ve çıktılar (ham LLM yanıtları büyüyebilir; isterseniz
+# data/ham/ satırını kaldırıp yanıtları sürümleyebilirsiniz)
+data/ham/
+data/islenmis/
+data/gercek/
+cikti/

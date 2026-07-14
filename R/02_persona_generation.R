@@ -86,5 +86,5 @@ build_persona_prompt <- function(p, item_order) {
 }
 
 personas <- generate_personas()
-write_rds(personas, "data/processed/personas.rds")
+saveRDS(personas, "data/processed/personas.rds")
 cat("Number of personas generated:", nrow(personas), "\n")

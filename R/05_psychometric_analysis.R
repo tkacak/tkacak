@@ -52,9 +52,9 @@ psychometric_summary <- function(data, label) {
        irt_params = irt_params, correlations = cor(mat))
 }
 
-all_samples <- read_rds("data/processed/all_samples.rds")
+all_samples <- readRDS("data/processed/all_samples.rds")
 analyses <- imap(all_samples, ~ psychometric_summary(.x, .y))
-write_rds(analyses, "output/analyses.rds")
+saveRDS(analyses, "output/analyses.rds")
 
 # ---- Cross-sample summary table ------------------------------------------
 summary_table <- map_dfr(analyses, function(a) {

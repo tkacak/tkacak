@@ -60,4 +60,4 @@ if (file.exists(real_path)) {
 
 all_samples <- c(llm_samples,
                  if (!is.null(real_sample)) list(real = real_sample))
-write_rds(all_samples, "data/processed/all_samples.rds")
+saveRDS(all_samples, "data/processed/all_samples.rds")

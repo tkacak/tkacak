@@ -9,8 +9,8 @@
 #   E) IRT parameter correlations + DIF screening
 # ============================================================
 
-analyses    <- read_rds("output/analyses.rds")
-all_samples <- read_rds("data/processed/all_samples.rds")
+analyses    <- readRDS("output/analyses.rds")
+all_samples <- readRDS("data/processed/all_samples.rds")
 
 stopifnot("real" %in% names(analyses))  # real data is required
 real       <- analyses$real
@@ -85,7 +85,7 @@ compare_to_real <- function(label) {
 }
 
 results <- map(llm_labels, compare_to_real) |> set_names(llm_labels)
-write_rds(results, "output/comparison.rds")
+saveRDS(results, "output/comparison.rds")
 
 comparison_table <- map_dfr(results, "summary")
 write_csv(comparison_table, "output/comparison_summary.csv")

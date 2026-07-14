@@ -76,7 +76,7 @@ for (j in seq_len(nrow(config$models))) {
   raw_file <- file.path("data/raw", paste0(label, ".rds"))
 
   # Resume support: load previously collected responses
-  results <- if (file.exists(raw_file)) read_rds(raw_file) else list()
+  results <- if (file.exists(raw_file)) readRDS(raw_file) else list()
   chat <- create_chat(m$provider, m$model)
   limiter <- make_rate_limiter(m$rpm)
   cat("\n==>", label, "| rpm cap:", m$rpm,
@@ -98,7 +98,7 @@ for (j in seq_len(nrow(config$models))) {
 
     if (!is.null(record)) {
       results[[p$persona_id]] <- record
-      write_rds(results, raw_file)  # persist immediately
+      saveRDS(results, raw_file)  # persist immediately
     }
     if (i %% 25 == 0) cat("  ", i, "personas done\n")
   }
